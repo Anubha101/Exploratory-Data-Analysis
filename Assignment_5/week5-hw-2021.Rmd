@@ -1,0 +1,220 @@
+---
+title: "Week 5 homework assignment"
+author: Anubha Nagar
+date: 29 th September, 2021
+output: 
+ rmdformats::downcute:
+    self_contained: true
+    thumbnails: true
+    lightbox: true
+    gallery: false
+    highlight: tango
+editor_options:
+  chunk_output_type: inline
+---
+
+## DSI-EDA
+## Professor Michael Shepherd
+
+Note: Be warned, it can take some time to choose a good data set! You might find yourself trying one and then realizing you need to switch to another. This is normal. This week's homework is worth 20 points instead of 10 in brightspace.
+
+# Part One
+1. Choose a data set from the posted google sheet. 
+
+*link chosen from google sheet:*
+
+https://politicscentre.nuffield.ox.ac.uk/whogov-dataset/
+
+# Part Two
+
+# 1. Write 3-5 sentences telling me about this data. 
+
+- What was it used for? Why was it collected? How would you describe the data generating process?
+- Who created this data, and why? 
+- What is the unit of analysis (what are the rows/observations)? 
+
+Answer:
+
+The data is the largest available dataset on members of government across time(1996- 2016) and 177 countries. This dataset was created to enable researchers to analyze governance data and draw insights. The data generation process in this case made it easier to see years worth of data on one spreadsheet. 
+
+Whogov made this data to make it possible to answer many questions on the male female ratios, understanding the trend of number of ministers etc for each country. The rows in the table is per person who is a part of the governance of a country( i.e. minister, leader etc.)
+
+
+# 2. Explore the data. What are the dimensions of the data? What types of variables are there?
+
+load dataset
+```{r}
+library(readr)
+WhoGov_within_V1_2 <- read_csv("WhoGov_within_V1.2.csv")
+View(WhoGov_within_V1_2)
+```
+
+Answer:
+
+```{r}
+dim(WhoGov_within_V1_2)
+str(WhoGov_within_V1_2)
+```
+
+The dataset has 226711 rows and 30 columns. 
+Variables consist of both characters and double as shown in the code output. 
+
+# Part Three
+
+# 1. Center your analysis on an exploratory (or "motivating") question. Tell me what it is. Use complete sentences.
+
+I chose to do an analysis on the trend of women in governance globally with a special emphasis on Afghanistan. I want to understand what the trend has been globally for women employment in governance and compare those global trends with employment of women in Afghanistan. 
+
+
+# 2. Explore your question using visualizations. 
+
+- In the end, choose two 'final' plots to 'print' and interpret the visualization in 2-5 sentences. Do not show me tons of plots. Only include your final plots in your report. Create a separate file if needed.
+- Why did you choose this graphic? What does it show?
+
+
+```{r}
+head(WhoGov_within_V1_2)
+```
+
+
+Importing libraries:
+```{r}
+library(tidyverse)
+library(ggplot2)
+```
+
+
+Plot 1:
+
+*This plot will help understand the trend of women employment globally in governance*
+
+```{r}
+women_world<- WhoGov_within_V1_2%>%
+  filter(gender == "Female")%>%
+  filter(minister == 1)%>%
+  group_by(year)%>%
+  summarize(n = n())
+women_world
+ggplot(women_world,aes(x = year, y = n))+ geom_line(color = "green")+ylab("Number of women in governance") + ggtitle("Global Women employment in Governance")
+```
+
+Here we can see the employment of women in governance has increased over the years. This steady increase is heartwarming to see that 1965 there were nearly 25 women globally in the government and over 50 years there has been such a huge rise to above 700 women in the government globally. 
+This plot also shows a sudden drop from 2017-2020. This drop is due to insufficient data for the years 2017-2020. 
+
+Now let's see the Afghanistan data. Did the number of female ministers increase or decrease over time?
+
+```{r}
+b <- WhoGov_within_V1_2%>%
+  filter(gender == "Female")%>%
+  filter(country_isocode == "AFG")%>%
+  filter(minister == 1)%>%
+  group_by(year)%>%
+  summarize(n = n())
+b
+ggplot(b,aes(x = year, y = n))+ geom_line(color = "purple")
+```
+
+As we can see that the number of female governance was 0 from 1965- 1980 and it slowly started increasing, but in 2009 again it came down to 1. Even though there was a significant increase in women over the years 1980-2005, the highest number of women at that time went up to only 3, which is very less. In 2015-2016 the number of women working as ministers remained constant. Beyond 2016 there is not enough information to determine a trend. 
+The alarming thing is there is no trend, some years we see a rise but then there are steep falls in value. 
+
+These alarming numbers got me wanting to know the percentage of men vs women in the Afghanistan Government!
+
+Percentage of males and females in Afghanistan government:
+
+```{r}
+male_off <- WhoGov_within_V1_2%>%
+  filter(gender == "Male")%>%
+  filter(country_isocode == "AFG")%>%
+  summarize(n= n())
+head(male_off)
+
+female_off <- WhoGov_within_V1_2%>%
+  filter(gender == "Female")%>%
+  filter(country_isocode == "AFG")%>%
+  summarize(n = n())
+head(female_off)
+
+slices <- c(1308,55)
+lbls <- c("Male", "Female")
+pct <- round(slices/sum(slices)*100)
+lbls <- paste(lbls, pct) # add percents to labels
+lbls <- paste(lbls,"%",sep="") # ad % to labels
+pie(slices,labels = lbls, col=rainbow(length(lbls)),
+   main="Proportion of Male vs Female in Afghanistan")
+```
+
+Only 4 % of the government is female, which is such a low number!
+
+
+As an extension of this analysis, I wanted to check how many women in Afghanistan have taken the role of defense minister,finance minister, foreign affairs and agriculture minister?
+ 
+```{r}
+WhoGov_within_V1_2%>%
+  filter(country_isocode == "AFG")%>%
+  filter(gender == "Female")%>%
+  filter(m_defense == 1)
+  
+```
+
+```{r}
+WhoGov_within_V1_2%>%
+  filter(country_isocode == "AFG")%>%
+  filter(gender == "Female")%>%
+  filter(m_finance == 1)
+  
+```
+
+```{r}
+WhoGov_within_V1_2%>%
+  filter(country_isocode == "AFG")%>%
+  filter(gender == "Female")%>%
+  filter(m_agriculture == 1)
+  
+```
+
+```{r}
+WhoGov_within_V1_2%>%
+  filter(country_isocode == "AFG")%>%
+  filter(gender == "Female")%>%
+  filter(m_foreignaffairs == 1)
+  
+```
+
+It is shocking to note that there are no women over all the years(till 2016) to have been a defense, finance, agricultural and foreign affairs minister. 
+
+
+# Part Four
+
+1. Answer the following questions:
+
+- how long did it take you to 'choose' this data?
+
+It took me almost a long time to find the correct dataset. I toggled with many datasets to find this dataset. This was one of the hardest part of the assignment. 
+
+- how much data wrangling, joining, subsetting, or other forms of data manipulation (such as variable creation, or relabeling) did you have to do? Why did you do it?
+
+I had to do lots of data wrangling to get the data I wanted since everything was so deeply embedded in the data. Also the fact that data was so large, plotting only a specific portion of it required lots of wrangling. 
+
+- what did you learn from your data exploration?
+
+I understood many things:
+
+* General Thumb Rules of Analysis in the Real world:
+
+  * The data will be messy and huge and we need to find a way to extract what we want. 
+  
+  * Understanding the dataset is very important before jumping into solving the question.
+  
+  * Drawing inferences from the graphs are as important as drawing the graph itself.
+  
+* From the graphs I made I realized: 
+
+  * The trend of women in governance has increased globally but in countries such as Afghanistan, the trend is very hard to say (the data may increase gradually but then reduces drastically). Moreover we realize how such less women go into government in Afghanistan. There has never been a finance, defense, agricultural or foreign affairs minister (till 2016), which is super alarming!
+
+
+
+
+
+
+
+

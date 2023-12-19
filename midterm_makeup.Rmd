@@ -1,0 +1,104 @@
+---
+title: "Midterm_Makeup"
+author: "Anubha Nagar"
+date: "10/29/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(readr)
+library(tidyverse)
+library(tidytext)
+library(ggplot2)
+library(textdata)
+```
+
+# Processing data
+1. Import your data into R
+2. Perform any additional cleaning tasks as needed.
+
+```{r}
+# 1. Data on 3000 of Donald Trump's Tweets 2017-2018
+load(url("https://cbail.github.io/Trump_Tweets.Rdata"))
+colnames(trumptweets)
+dim(trumptweets)
+```
+
+For tips and tools on how to clean up difficult text data, please visit the TidyText website here: https://www.tidytextmining.com/tidytext.html
+
+## Word count
+
+# 1. Tokenize your corpus and generate a word count.
+# 2. Using the `TidyText` package, remove stop words and generate a new word count.
+# 3. Create a visualization of the word count distribution and interpret your results.
+
+Solution:
+```{r}
+trumpwords <- trumptweets %>% select(status_id, text) %>% unnest_tokens(word, text)
+personal_stop_words <- stop_words %>% 
+  bind_rows(data.frame(word = c("t.co","https","rt", "amp")))
+better_words <- trumpwords %>% anti_join(personal_stop_words)
+better_words %>% 
+  count(word, sort=T) %>% 
+  slice(1:15) %>%
+  ggplot(aes(x = reorder(word, n, function(n) -n), y = n)) + 
+  geom_bar(stat = "identity") + 
+  xlab("Words for Trump's Tweets") +
+  ylab("Count of Words") +
+  ggtitle("President Trump's tweets words")+ coord_flip()
+```
+Here we see that the word "people" has come the most number of times referring to the fact that trump wrote most of his tweets to or about the people. Many tweets are also about "news" which could symbolize that Trump liked referring to different news articles in his tweets. The fact that he was president is another reason why he mentioned "president" and "Trump" in a lot of his tweets. Other topics written about a lot are "time", "jobs", "house" and "tax", which I think are really important topics for a president to write about. The fact that Trump was a democratic candidate a lot of tweets were related to the democrats. 
+
+## Tf-idf
+1. Generate a tf-idf measure of words in your dataset.
+2. Create a visualization of the tf-idf measure and interpret your results.
+3. Is the basic word count or the tf-idf more appropriate for your analysis?
+
+Solution:
+```{r}
+idf_words <- trumptweets %>% select(status_id, text) %>%
+  unnest_tokens(word, text)
+better_idf_words <- idf_words %>% anti_join(stop_words)
+tweet_length <- better_idf_words %>% group_by(status_id) %>%
+  summarize(total =sum(n()))
+better_words <- left_join(better_idf_words, tweet_length)
+tfidf_words <- better_words %>% bind_tf_idf(word, status_id, total)
+tfidf_words <- tfidf_words %>% arrange(desc(tf_idf))
+tfidf_words2 <- unique(tfidf_words[c("word", "status_id", "tf_idf")])
+tfidf_words3 <- head(tfidf_words2,15)
+ggplot(tfidf_words3, aes(x=word, y=tf_idf)) +
+  geom_bar(stat = "identity") +
+  labs(
+    title= "Trump Tweets Tf-idf",
+    x = "Words",
+    y = "tf-idf"
+  )+ coord_flip()
+```
+The relevance of topics is measured by the tf-idf(Term Frequency Inverse Document Frequency). Here we see the word "cpac" word has highest topic relevance in Trump's tweets. Cpac stands for Conservative Political Action Conference which was help and that means that trump wrote about the cpac as a topic of a lot of his tweets. The second highest word is "america" which seems expected since he was the president of america. It is ironic how a lot of his posts were more about cpac than america. The themes of "standforouranthem" etc are most probably common hashtags that the president would have used. It has also been seen that a number of his tweets, the topic of relevance is Ivanka, his daughter. 
+
+Though we have already removed very common “stop words” from our analysis, it is common practice in quantitative text analysis to identify unusual words that might set one document apart from the others (this will become particularly important when we get to more advanced forms of pattern recognition in text later on). The metric most commonly used to identify these unusual words is “Term Frequency Inverse Document Frequency” (tf-idf).
+
+## Sentiment analysis
+
+1. Using the built-in sentiments from `TidyText`, generate sentiment counts for your words using either the basic word count or tf-idf measure from above.
+2. Create a visualization of the sentiment measure. Interpret your results.
+
+
+Solution:
+```{r}
+sentiments <- get_sentiments("nrc")
+df_sent <- better_idf_words %>% left_join(sentiments)
+(df_sent_corrected <- df_sent %>% filter(!is.na(sentiment)) %>% group_by(sentiment) %>% summarize(n = n()))
+df_sent_corrected %>%
+  ggplot(aes(x = reorder(sentiment, n, function(n) -n), y = n)) +
+  geom_bar(stat = "identity") +
+  #theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+  labs(
+    x = "Trump Tweet Words Sentment",
+    y = "Count",
+    title= "Trump Tweets Sentiment Analysis"
+  )+ coord_flip()
+```
+Here it can be seen that most of Trump's tweets have a positive sentiment attached to it. But it is alarming to see such high rates of negative comments, which shows that Trump did post a lot of negative comments and was not afraid of consequences after. All these sentiments "fear", "joy", "sadness", "anger", "disgust" and "surprise" show the wide range of sentiments that Trump portrayed in his tweets. 
+

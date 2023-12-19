@@ -1,0 +1,105 @@
+---
+title: "Week 2 homework assignment"
+author: Student Name
+date: Due Date
+output: pdf_document
+editor_options:
+  chunk_output_type: inline
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+## DSI-EDA
+## Professor Michael Shepherd
+
+```{r, include=FALSE}
+library(rmarkdown)
+library(data.table)
+library(tidyverse)
+library(datasets)
+```
+
+## Homework Assignment
+*(Due Date: Wednesday before class, 11: 59pm CST)*
+
+Let's practice what we've learned about data.table, tidyverse, and summarizing data so far. We're going to be working with one of R's built-in datasets. These data are included with the base installation of R for learning purposes. Loading the library `datasets` makes 30+ data objects available to your R session. Today's dataset is named `UCBAdmissions` and provides data on student admissions to University of California, Berkeley.
+
+To submit this assignment, knit it to github flavored markdown and submit all your work on GitHub.
+
+*Question 1*: What kind of dataset is UCBAdmissions? Include the command you used to find out. Convert `UCBAdmissions` to a data.table object and a data.frame object.
+
+```{r}
+
+## The type of dataset is...?
+print(class(UCBAdmissions))
+#The type of the dataset is "double"
+data <- UCBAdmissions
+## Convert to data.table
+admissions_dt <- data.table::as.data.table(data)
+admissions_dt
+## Convert to data.frame
+admissions_df <- as.data.frame(admissions_dt)
+admissions_df
+```
+
+*Question 2*: Using data.table syntax, sum the number of applicants by department and save the output as a new data object. Then, using tidyverse syntax, again sum the number of applicants by department and save the output as a new data object. Make sure you use the right type of object (data.table or data.frame) with the right syntax!
+
+```{r}
+## Sum using data.table syntax
+sum_dt <-admissions_dt[,.(N.total.sum =sum(N)), by=Dept][order(Dept)]
+sum_dt
+
+## Sum using tidyverse syntax
+sum_df <- admissions_df %>%
+  group_by(Dept) %>%
+  summarise(N.total.sum = sum(N))
+
+sum_df
+
+```
+
+*Question 3*: You can use the help operator, `?`, to get help with any function in R. For example, if you wanted to get help with the `names()` function, you would use `?names()`. You can also get help with a whole library. For example, you could use `?tidyverse` to get help with the tidyverse library. Using the help function, describe as best you can the differences between the data.table and tidyverse methods above. Do you prefer one over the other? Why or why not?
+
+```{r}
+?data.table
+```
+```{r}
+?tidyverse
+```
+
+Difference between data.table and tidyverse operations
+assume tb is the tibble and dt is data table
+x and y are column headings
+
+
+|     data.table                      |         tidyverse           |
+|:-----------------------------------:|:---------------------------:|
+|1. Creates a tibble or a data frame  |1. Creates a data table      |
+|2. read_csv                          |2. fread                     |
+|3. select(tb,x,y)                    |3. dt[,.(x,y)]               |
+|4. slice(tb,1:3)                     |4. dt[1:3,, ]                |
+|5. filter(tb, state_condition)       |5. dt[state_condition,]      |
+|6. arrange(tb, x)                    |6. dt[order(x),]             |
+|7. tb <- mutate(tb, var = formula)   |7. dt[, var:= formula]       |
+                        
+
+
+I prefer tidyverse as the functions are selfexplainatory and easier to undertand and remember.
+
+*Question 4*: Using either method above, find the average department admittance rate for observations with `Female` in the gender column.
+
+```{r}
+female_app <- filter(admissions_dt, Gender ==  "Female") %>% group_by(Dept) %>% summarize(applicant=sum(N))
+print(female_app)
+
+female_adm <- filter(admissions_dt, Gender ==  "Female", Admit == "Admitted") %>% group_by(Dept) %>% summarize(applicant=sum(N))
+print(female_adm)
+
+female_rate <- mutate(female_adm, ad_rate = female_adm$applicant/female_app$applicant)
+print(female_rate)
+
+```
+

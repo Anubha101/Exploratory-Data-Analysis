@@ -1,0 +1,17 @@
+---
+title: "q_2_eda"
+author: "Anubha Nagar"
+date: "01/09/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+[^footnote]: This is a footnote for second question in assignment 27.3.1.
+
+--------------------------------------------------
+horizonatal rule
+
+> block code
